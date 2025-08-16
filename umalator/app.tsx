@@ -32,6 +32,7 @@ function skillmeta(id: string) {
 }
 
 import './app.css';
+import { HorseStateStorageBox } from './components/databox';
 
 const DEFAULT_COURSE_ID = CC_GLOBAL ? 10606 : 10807;
 const DEFAULT_SAMPLES = 500;
@@ -456,7 +457,9 @@ function App(props) {
 
 	const [worker1, worker2] = [1,2].map(_ => useMemo(() => {
 		const w = new Worker('./simulator.worker.js');
+		console.log('Worker created:', w);
 		w.addEventListener('message', function (e) {
+			console.log('Worker message received:', e.data);
 			const {type, results} = e.data;
 			switch (type) {
 				case 'compare':
@@ -518,6 +521,7 @@ function App(props) {
 	Object.keys(skillnames).forEach(id => strings.skillnames[id] = skillnames[id][langid]);
 
 	function doComparison() {
+		console.log('Starting comparison...');
 		postEvent('doComparison', {});
 		worker1.postMessage({
 			msg: 'compare',
@@ -701,6 +705,19 @@ function App(props) {
 	return (
 		<Language.Provider value={props.lang}>
 			<IntlProvider definition={strings}>
+				<div>
+					{
+						Array.from({ length: 6 }, (_, i) => (
+							<HorseStateStorageBox
+								uma1={uma1}
+								setUma1={setUma1}
+								uma2={uma2}
+								setUma2={setUma2}
+								storageKey={`uma${i + 1}`}
+							/>
+						))
+					}
+				</div>
 				<div id="topPane" class={chartData ? 'hasResults' : ''}>
 					<RaceTrack courseid={courseId} width={960} height={240} xOffset={20} yOffset={15} yExtra={20} mouseMove={rtMouseMove} mouseLeave={rtMouseLeave} regions={skillActivations}>
 						<VelocityLines data={chartData} courseDistance={course.distance} width={960} height={250} xOffset={20} showHp={showHp} />
@@ -782,5 +799,4 @@ function App(props) {
 	);
 }
 
-initTelemetry();
 render(<App lang="en-ja" />, document.getElementById('app'));
